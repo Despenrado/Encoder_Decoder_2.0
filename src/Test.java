@@ -65,7 +65,7 @@ public class Test implements Runnable{
         int i = 0;
         Iterator<Boolean> iter = noise.iterator();
         while (iter.hasNext()){
-            if(random.nextInt(100) < 10){
+            if(random.nextInt(100) < UI.pollute){
                 boolean tmp = iter.next();
                 this.noise.set(i, !tmp);
             }
