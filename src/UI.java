@@ -1,14 +1,9 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Scanner;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,12 +14,13 @@ public class UI{
     ExecutorService executorService2 = Executors.newFixedThreadPool(1);
 
     LinkedList<ArrayList<Boolean>> signal;
-    int capacity;
-    static int times = 0;
-    static int time = 0;
-    static boolean aBoolean = false;
-    static int sign_lenght = 1;
-    static int pollute = 1;
+    private int capacity;
+    private static int times = 0;
+    private static int time = 0;
+    private static boolean aBoolean = false;
+    private static int sign_lenght = 1;
+    protected static int pollute = 1;
+    private String cin;
 
     UI(){
     }
@@ -33,7 +29,7 @@ public class UI{
         signal = new LinkedList<ArrayList<Boolean>>();
         System.out.print("$ ");
         Scanner scanner = new Scanner(System.in);
-        String cin = scanner.nextLine();
+        cin = scanner.nextLine();
         String []retval = cin.split(" ");
 
         switch (retval[0]){
@@ -47,12 +43,7 @@ public class UI{
                 break;
             }
             case "s":{
-                System.out.println("Humming statistic\n" +
-                        "number of correction - quantity - percent");
-                Test.getStatistic("Results_Humming.txt");
-                System.out.println("\nTriple statistic\n" +
-                        "number of correction - quantity - percent");
-                TestTriple.getStatistic("Results_Triple.txt");
+                ScanResults.print(ScanResults.getStatistic(retval[1]));
                 break;
             }
             case "t":
@@ -75,11 +66,11 @@ public class UI{
 
     public void help(){
         System.out.println("HELP:\n" +
-                "[command] [quantity] [capacity] [option] [option2] [pollute] []\n" +
+                "[command] [quantity] [capacity] [option] [option2] [pollute]\n" +
                 "\n" +
                 "command:\n" +
                 "t of test -- test\n" +
-                "s -- get statistic\n" +
+                "s -- get statistic and after space enter name of file\n" +
                 "h or help -- help\n" +
                 "exit -- exit from application\n" +
                 "\n" +
@@ -101,7 +92,7 @@ public class UI{
                 "if you write int here, it's value will be use for probability of contamination of each byte of the signal. Default = 1(if you nothing to write)");
     }
 
-    public void testMenu(String [] retval){
+    public void testMenu(String[] retval){
         try {
             times = Integer.parseInt(retval[1]);
             this.capacity = Integer.parseInt(retval[2]);
@@ -152,21 +143,15 @@ public class UI{
             }
             default:{ return;}
         }
-        System.out.println("Humming statistic\n" +
-                "number of correction - quantity - percent");
-        Test.getStatistic("Results_Humming.txt");
-        System.out.println("\nTriple statistic\n" +
-                "number of correction - quantity - percent");
-        TestTriple.getStatistic("Results_Triple.txt");
-//        Iterator<ArrayList<Boolean>> iter = signal.iterator();
-//        while (iter.hasNext()) {
-//            TripleEncoder.ptintToConsole(iter.next());
-//        }
+        ScanResults.print(ScanResults.getStatistic("Results_Humming.txt"));
+        ScanResults.print(ScanResults.getStatistic("Results_Triple.txt"));
 
     }
 
 
     public void startTest(){
+        Test.fileNewTest(cin);
+        TestTriple.fileNewTest(cin);
         System.out.println("|                                               Testing:                                           |");
         for (int i = 0; i < times; i++) {
             Iterator<ArrayList<Boolean>> iter = signal.iterator();
@@ -348,8 +333,6 @@ public class UI{
         }catch (Exception e){return null;}
     }
 
-
-
     public static void main(String[] args) {
 
         UI ui = new UI();
@@ -358,3 +341,4 @@ public class UI{
         System.exit(0);
     }
 }
+

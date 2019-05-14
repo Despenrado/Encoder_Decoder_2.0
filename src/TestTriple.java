@@ -129,50 +129,27 @@ public class TestTriple implements Runnable{
         }
     }
 
-    public  static void getStatistic(String fileName){
-        try(BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName))){
-            int []result = new int[4];
-            int much = 0;
-            int res;
-            for (int i = 0; i < 4; i++) {
-                result[i] = 0;
-            }
-            do {
-                try {
-                    res = Integer.parseInt(bufferedReader.readLine());
-                    much++;
-                }
-                catch (Exception e){
-                    res = -1;
-                }
-                switch (res){
-                    case 1:{
-                        result[0]++;
-                        break;
-                    }
-                    case 2:{
-                        result[1]++;
-                        break;
-                    }
-                    case 3:{
-                        result[2]++;
-                        break;
-                    }
-                    case 4:{
-                        result[3]++;
-                        break;
-                    }
-                }
+    public static void fileNewTest(String text){
+        TestTriple.delFile();
+        TestTriple.propertiesOfTest(text);
+    }
 
-            }while(res != -1);
-            System.out.println("1) - " + result[0] + " - " + result[0]*100/much + "%");
-            System.out.println("2) - " + result[1] + " - " + result[1]*100/much + "%");
-            System.out.println("3) - " + result[2] + " - " + result[2]*100/much + "%");
-            System.out.println("4) - " + result[3] + " - " + result[3]*100/much + "%");
-        }
-        catch (IOException e){
-            System.out.println("Error: file read error");
+    public static void propertiesOfTest(String text){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Log_Triple.txt", true), "UTF-8")))){
+            bufferedWriter.write(text);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }catch (IOException e){
+
         }
     }
 
+    public static void delFile(){
+        try{
+            File file = new File("Results_Triple.txt");
+            file.delete();
+        }catch (Exception e){
+
+        }
+    }
 }

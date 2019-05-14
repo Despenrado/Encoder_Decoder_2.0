@@ -155,70 +155,27 @@ public class Test implements Runnable{
         }
     }
 
+    public static void fileNewTest(String text){
+        Test.delFile();
+        Test.propertiesOfTest(text);
+    }
 
-    public  static void getStatistic(String fileName){
-        try(BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName))){
-            int []result = new int[8];
-            int much = 0;
-            int res;
-            for (int i = 0; i < 8; i++) {
-                result[i] = 0;
-            }
-            do {
-                try {
-                    res = Integer.parseInt(bufferedReader.readLine());
-                    much++;
-                }
-                catch (Exception e){
-                    res = -1;
-                }
-                switch (res){
-                    case 1:{
-                        result[0]++;
-                        break;
-                    }
-                    case 2:{
-                        result[1]++;
-                        break;
-                    }
-                    case 3:{
-                        result[2]++;
-                        break;
-                    }
-                    case 4:{
-                        result[3]++;
-                        break;
-                    }
-                    case 5:{
-                        result[4]++;
-                        break;
-                    }
-                    case 6:{
-                        result[5]++;
-                        break;
-                    }
-                    case 7:{
-                        result[6]++;
-                        break;
-                    }
-                    case 8:{
-                        result[7]++;
-                        break;
-                    }
-                }
+    public static void propertiesOfTest(String text){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Log_Humming.txt", true), "UTF-8")))){
+            bufferedWriter.write(text);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }catch (IOException e){
 
-            }while(res != -1);
-            System.out.println("1) - " + result[0] + " - " + result[0]*100/much + "%");
-            System.out.println("2) - " + result[1] + " - " + result[1]*100/much + "%");
-            System.out.println("3) - " + result[2] + " - " + result[2]*100/much + "%");
-            System.out.println("4) - " + result[3] + " - " + result[3]*100/much + "%");
-            System.out.println("5) - " + result[4] + " - " + result[4]*100/much + "%");
-            System.out.println("6) - " + result[5] + " - " + result[5]*100/much + "%");
-            System.out.println("7) - " + result[6] + " - " + result[6]*100/much + "%");
-            System.out.println("8) - " + result[7] + " - " + result[7]*100/much + "%");
         }
-        catch (IOException e){
-            System.out.println("Error: file read error");
+    }
+
+    public static void delFile(){
+        try{
+            File file = new File("Results_Humming.txt");
+            file.delete();
+        }catch (Exception e){
+
         }
     }
 
