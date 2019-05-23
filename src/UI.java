@@ -6,11 +6,13 @@ import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class UI{
 
 
-    ExecutorService executorService = Executors.newFixedThreadPool(1);
+    ExecutorService executorService1 = Executors.newFixedThreadPool(1);
     ExecutorService executorService2 = Executors.newFixedThreadPool(1);
 
     LinkedList<ArrayList<Boolean>> signal;
@@ -21,6 +23,7 @@ public class UI{
     private static int sign_lenght = 1;
     protected static int pollute = 1;
     private String cin;
+    private int repeat = 1;
 
     UI(){
     }
@@ -66,7 +69,7 @@ public class UI{
 
     public void help(){
         System.out.println("HELP:\n" +
-                "[command] [quantity] [capacity] [option] [option2] [pollute]\n" +
+                "[command] [quantity] [capacity] [option1] [option1_capacity] [pollute] [pollution_%] [option2] [option2_number]\n" +
                 "\n" +
                 "command:\n" +
                 "t of test -- test\n" +
@@ -78,18 +81,26 @@ public class UI{
                 "\n" +
                 "capacity - split signal by bits\n" +
                 "\n" +
-                "option:\n" +
+                "option1:\n" +
                 "-r - generate random signal of option2 bits\n" +
                 "-f - read from file. Name of file = option 2\n" +
                 "-s - use bites from option2 to generating signal\n" +
                 "\n" +
-                "option2n:" +
+                "option1_capacity:" +
                 "if you use -r, enter how many bites will be in signal\n" +
                 "if you use -f, enter name of file which have signal\n" +
                 "if you use -s, enter your signal(example: 1010)\n" +
                 "\n" +
                 "pollute:\n" +
-                "if you write int here, it's value will be use for probability of contamination of each byte of the signal. Default = 1(if you nothing to write)");
+                "-p - if you want to change pollution of signal. default=1%" +
+                "\n" +
+                "pollution_% - set per cent of pollution (default=1)\n" +
+                "\n" +
+                "option2:\n" +
+                "-n - if you want repeat 'option2_number' times\n" +
+                "\n" +
+                "option2_number - how many times repeat test with current settings\n" +
+                "\n");
     }
 
     public void testMenu(String[] retval){
@@ -100,8 +111,18 @@ public class UI{
         catch (Exception e){ return;}
 
         try {
-            if (retval[5] != null) {
-                pollute = Integer.parseInt(retval[5]);
+            if (retval[5] != null && retval[6] != null) {
+                if(retval[5].equals("-p")) {
+                    pollute = Integer.parseInt(retval[6]);
+                    if (retval[7].equals("-n")){
+                        this.repeat = Integer.parseInt(retval[8]);
+                    }
+                }
+                else {
+                    if (retval[5].equals("-n")){
+                        this.repeat = Integer.parseInt(retval[6]);
+                    }
+                }
             }
         }catch (Exception e){}
 
@@ -113,7 +134,7 @@ public class UI{
                 UI.printToFile("Random_Signal.txt", this.signal);
                 sign_lenght = signal.size();
                 System.out.println("OK");
-                startTest();
+                startLoop();
                 break;
             }
             case "-f":{
@@ -121,14 +142,14 @@ public class UI{
                 if(retval[4] == null){return;}
                 signal = readFromFile(retval[4], capacity);
                 sign_lenght = signal.size();
-                startTest();
+                startLoop();
                 break;
             }
             case "-s":{
                 System.out.print("read from console... ");
                 ToBoolean(retval[4], capacity);
                 sign_lenght = signal.size();
-                startTest();
+                startLoop();
                 break;
             }
             case "-str":{               // in progress
@@ -143,24 +164,45 @@ public class UI{
             }
             default:{ return;}
         }
-        ScanResults.print(ScanResults.getStatistic("Results_Humming.txt"));
-        ScanResults.print(ScanResults.getStatistic("Results_Triple.txt"));
 
     }
 
+    public void startLoop(){
+        for (int i = 0; i < this.repeat; i++) {
+            startTest(i);
+            ScanResults.print(ScanResults.getStatistic("Results_Humming.txt"));
+            ScanResults.print(ScanResults.getStatistic("Results_Triple.txt"));
+        }
+    }
 
-    public void startTest(){
+    public void startTest(int testNumber){
         Test.fileNewTest(cin);
         TestTriple.fileNewTest(cin);
+        System.out.println("Test Number: " + testNumber);
         System.out.println("|                                               Testing:                                           |");
-        for (int i = 0; i < times; i++) {
-            Iterator<ArrayList<Boolean>> iter = signal.iterator();
-            while (iter.hasNext()){
-                ArrayList<Boolean> tmp = iter.next();
-                executorService.submit(new TestTriple(tmp, capacity));
-                executorService2.submit(new Test(tmp, capacity));
-            }
-        }
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        executorService.submit(new Thread(){
+            @Override
+            public void run() {
+                for (int i = 0; i < times; i++) {
+                    Iterator<ArrayList<Boolean>> iter = signal.iterator();
+                    while (iter.hasNext()){
+                        ArrayList<Boolean> tmp = iter.next();
+                        executorService1.submit(new TestTriple(tmp, capacity));
+                    }
+                }
+        }});
+        executorService.submit(new Thread(){
+            @Override
+            public void run() {
+                for (int i = 0; i < times; i++) {
+                    Iterator<ArrayList<Boolean>> iter = signal.iterator();
+                    while (iter.hasNext()){
+                        ArrayList<Boolean> tmp = iter.next();
+                        executorService2.submit(new Test(tmp, capacity));
+                    }
+                }
+            }});
         aBoolean = false;
         while (!aBoolean){
             try {
@@ -169,6 +211,7 @@ public class UI{
                 e.printStackTrace();
             }
         }
+        executorService.shutdown();
     }
 
 

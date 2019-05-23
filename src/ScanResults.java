@@ -37,7 +37,6 @@ public class ScanResults {
 
     public static ScanResults getStatistic(String fileName){
         try(BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName))){
-            boolean isHumming = false;
             int []result = new int[8];
             int much = 0;
             int res;
@@ -71,36 +70,31 @@ public class ScanResults {
                     }
                     case 5:{
                         result[4]++;
-                        isHumming = true;
                         break;
                     }
                     case 6:{
                         result[5]++;
-                        isHumming = true;
                         break;
                     }
                     case 7:{
                         result[6]++;
-                        isHumming = true;
                         break;
                     }
                     case 8:{
                         result[7]++;
-                        isHumming = true;
                         break;
                     }
                 }
 
             }while(res != -1);
             String encoderName;
-            if(isHumming){
-                encoderName = "Humming";
+            if(fileName.equals("Results_Humming.txt")){
+                return new ScanResults(result, "Humming", much);
             }
             else {
-                encoderName = "Triple";
+                return new ScanResults(result, "Triple", much);
             }
 
-            return new ScanResults(result, encoderName, much);
         }
         catch (IOException e){
             System.out.println("Error: file read error");
@@ -116,9 +110,11 @@ public class ScanResults {
     public static void printToFile(ScanResults scanResults){
         if(scanResults.getencoderName().equals("Humming")){
             printToFileHumming(scanResults);
+            printToFileHumming_Correct_nonCorrect(scanResults);
         }
         else {
             printToFileTriple(scanResults);
+            printToFileTriple_Correct_nonCorrect(scanResults);
         }
     }
 
@@ -185,6 +181,45 @@ public class ScanResults {
                 "number of correction - quantity - percent");
         for (int i = 0; i < 4; i++) {
             System.out.println((i + 1) + ") - " + scanResults.results[i] + " - " + scanResults.results[i] * 100 / scanResults.number + "%");
+        }
+    }
+
+    public static void printToFileHumming_Correct_nonCorrect(ScanResults scanResults){
+        int []sum = new int[2];
+        sum[0] = 0;
+        sum[1] = 0;
+        for (int i = 0; i < 4; i++) {
+            sum[0] = sum[0] + scanResults.getResults()[i];
+        }
+        for (int i = 4; i < 8; i++) {
+            sum[1] = sum[1] + scanResults.getResults()[i];
+        }
+            ScanResults.printToFile("Humming_Correct_nonCorrect.txt", sum[0]);
+            ScanResults.printToFile("Humming_Correct_nonCorrect.txt", sum[1]);
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Humming_Correct_nonCorrect.txt", true), "UTF-8")))){
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }catch (IOException e){
+            System.out.println("error");
+        }
+    }
+    public static void printToFileTriple_Correct_nonCorrect(ScanResults scanResults){
+        int []sum = new int[2];
+        sum[0] = 0;
+        sum[1] = 0;
+        for (int i = 0; i < 2; i++) {
+            sum[0] = sum[0] + scanResults.getResults()[i];
+        }
+        for (int i = 2; i < 4; i++) {
+            sum[1] = sum[1] + scanResults.getResults()[i];
+        }
+        ScanResults.printToFile("Triple_Correct_nonCorrect.txt", sum[0]);
+        ScanResults.printToFile("Triple_Correct_nonCorrect.txt", sum[1]);
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Triple_Correct_nonCorrect.txt", true), "UTF-8")))){
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }catch (IOException e){
+            System.out.println("error");
         }
     }
 
