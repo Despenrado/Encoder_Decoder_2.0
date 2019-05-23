@@ -194,15 +194,22 @@ public class ScanResults {
         for (int i = 4; i < 8; i++) {
             sum[1] = sum[1] + scanResults.getResults()[i];
         }
-            ScanResults.printToFile("Humming_Correct_nonCorrect.txt", sum[0]);
-            ScanResults.printToFile("Humming_Correct_nonCorrect.txt", sum[1]);
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Humming_Correct_nonCorrect.txt", true), "UTF-8")))){
+            ScanResults.printToFile("Humming_Correct.txt", sum[0]);
+            ScanResults.printToFile("Humming_nonCorrect.txt", sum[1]);
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Humming_Correct.txt", true), "UTF-8")))){
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }catch (IOException e){
+            System.out.println("error");
+        }
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Humming_nonCorrect.txt", true), "UTF-8")))){
             bufferedWriter.newLine();
             bufferedWriter.flush();
         }catch (IOException e){
             System.out.println("error");
         }
     }
+
     public static void printToFileTriple_Correct_nonCorrect(ScanResults scanResults){
         int []sum = new int[2];
         sum[0] = 0;
@@ -213,9 +220,15 @@ public class ScanResults {
         for (int i = 2; i < 4; i++) {
             sum[1] = sum[1] + scanResults.getResults()[i];
         }
-        ScanResults.printToFile("Triple_Correct_nonCorrect.txt", sum[0]);
-        ScanResults.printToFile("Triple_Correct_nonCorrect.txt", sum[1]);
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Triple_Correct_nonCorrect.txt", true), "UTF-8")))){
+        ScanResults.printToFile("Triple_Correct.txt", sum[0]);
+        ScanResults.printToFile("Triple_nonCorrect.txt", sum[1]);
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Triple_nonCorrect.txt", true), "UTF-8")))){
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }catch (IOException e){
+            System.out.println("error");
+        }
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Triple_Correct.txt", true), "UTF-8")))){
             bufferedWriter.newLine();
             bufferedWriter.flush();
         }catch (IOException e){
