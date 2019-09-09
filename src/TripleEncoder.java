@@ -1,27 +1,28 @@
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class TripleEncoder {
+public class TripleEncoder extends Signal{
 
-    ArrayList<Boolean> list;
-    ArrayList<Boolean> savedList;
-    int capacity;
-
-    TripleEncoder(ArrayList<Boolean> tmp, int tmp_cap){
-        this.capacity = tmp_cap;
-        this.savedList = new ArrayList<Boolean>(tmp);
+    TripleEncoder(ArrayList<Boolean> tmp){
+        super(tmp);
     }
 
     public void encode(){
+        calculationOfControlBits();
+        setFinalSignal(getIntermediateSignal());
+    }
+
+    @Override
+    void calculationOfControlBits(){
         ArrayList<Boolean> tmp = new ArrayList<Boolean>();
-        Iterator<Boolean> iter = this.savedList.iterator();
+        Iterator<Boolean> iter = this.getIntermediateSignal().iterator();
         while(iter.hasNext()){
             Boolean tmpBool = new Boolean(iter.next());
             for (int i = 0; i < 3; i++) {
                 tmp.add(tmpBool);
             }
         }
-        this.list = tmp;
+        setIntermediateSignal(tmp);
     }
 
     public static void ptintToConsole(ArrayList<Boolean> tmp){

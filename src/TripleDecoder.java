@@ -1,21 +1,21 @@
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class TripleDecoder {
+public class TripleDecoder extends Signal {
 
-    ArrayList<Boolean> noCorrectList;
-    ArrayList<Boolean> finalList;
-    int capacity;
-
-    TripleDecoder(ArrayList<Boolean> tmp, int tmp_cap){
-        this.capacity = tmp_cap;
-        this.noCorrectList = new ArrayList<Boolean>(tmp);
-
+    TripleDecoder(ArrayList<Boolean> tmp){
+        super(tmp);
     }
 
     public void decode(){
-        this.finalList = new ArrayList<Boolean>();
-        Iterator<Boolean> iter = this.noCorrectList.iterator();
+        calculationOfControlBits();
+        setFinalSignal(getIntermediateSignal());
+    }
+
+    @Override
+    void calculationOfControlBits(){
+        setIntermediateSignal(new ArrayList<Boolean>());
+        Iterator<Boolean> iter = this.getInitialSignal().iterator();
         while (iter.hasNext()){
             Boolean tmp1 = iter.next();
             Boolean tmp2 = iter.next();
@@ -30,7 +30,7 @@ public class TripleDecoder {
             if(tmp2 == tmp3){
                 tmp = tmp2;
             }
-            finalList.add(tmp);
+            getIntermediateSignal().add(tmp);
         }
     }
 
