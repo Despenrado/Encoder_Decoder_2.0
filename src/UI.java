@@ -6,34 +6,31 @@ import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public class UI{
 
 
-    ExecutorService executorService1 = Executors.newFixedThreadPool(1);
-    ExecutorService executorService2 = Executors.newFixedThreadPool(1);
-
-    LinkedList<ArrayList<Boolean>> signal;
-    private int capacity;
-    private static int times = 0;
-    private static int time = 0;
-    private static boolean aBoolean = false;
-    private static int sign_lenght = 1;
-    protected static int pollute = 1;
-    private String cin;
-    private int repeat = 1;
+    private ExecutorService executorService1 = Executors.newFixedThreadPool(1);
+    private ExecutorService executorService2 = Executors.newFixedThreadPool(1);
+    private Data parametrs;
+    private int progressLine;
+    private boolean inProcess;
+    private int signLenght;
+    private String commandLineText;
+    private int repeatTest;
 
     UI(){
+        this.progressLine = 0;
+        this.inProcess = false;
+        this.signLenght = 1;
+        this.repeatTest = 1;
     }
 
-    public void mainLoop(){
-        signal = new LinkedList<ArrayList<Boolean>>();
+    private void commandMenu(){
         System.out.print("$ ");
         Scanner scanner = new Scanner(System.in);
-        cin = scanner.nextLine();
-        String []retval = cin.split(" ");
+        commandLineText = scanner.nextLine();
+        String []retval = commandLineText.split(" ");
 
         switch (retval[0]){
             case"h":
@@ -51,7 +48,7 @@ public class UI{
             }
             case "t":
             case "test":{
-                testMenu(retval);
+                testOptins(retval);
                 break;
             }
             default:{
@@ -59,13 +56,9 @@ public class UI{
                 break;
             }
         }
-
-
-
-
-
-        mainLoop();
+        commandMenu();
     }
+
 
     public void help(){
         System.out.println("HELP:\n" +
@@ -103,24 +96,25 @@ public class UI{
                 "\n");
     }
 
-    public void testMenu(String[] retval){
+    private void testOptins(String[] retval){
+        parametrs = new Data();
         try {
-            times = Integer.parseInt(retval[1]);
-            this.capacity = Integer.parseInt(retval[2]);
+            parametrs.setNumberOfTessts(Integer.parseInt(retval[1]));
+            parametrs.setCapacity(Integer.parseInt(retval[2]));
         }
         catch (Exception e){ return;}
 
         try {
             if (retval[5] != null && retval[6] != null) {
                 if(retval[5].equals("-p")) {
-                    pollute = Integer.parseInt(retval[6]);
+                    parametrs.setPollution(Integer.parseInt(retval[6]));
                     if (retval[7].equals("-n")){
-                        this.repeat = Integer.parseInt(retval[8]);
+                        this.repeatTest = Integer.parseInt(retval[8]);
                     }
                 }
                 else {
                     if (retval[5].equals("-n")){
-                        this.repeat = Integer.parseInt(retval[6]);
+                        this.repeatTest = Integer.parseInt(retval[6]);
                     }
                 }
             }
@@ -131,8 +125,8 @@ public class UI{
                 System.out.print("generating random signal... ");
                 if(retval[4] == null){return;}
                 genRandomSignal(Integer.parseInt(retval[4]));
-                UI.printToFile("Random_Signal.txt", this.signal);
-                sign_lenght = signal.size();
+                UI.printToFile("Random_Signal.txt", parametrs.getSignal());
+                signLenght = parametrs.getSignal().size();
                 System.out.println("OK");
                 startLoop();
                 break;
@@ -140,26 +134,16 @@ public class UI{
             case "-f":{
                 System.out.print("read from file... ");
                 if(retval[4] == null){return;}
-                signal = readFromFile(retval[4], capacity);
-                sign_lenght = signal.size();
+                parametrs.setSignal(readFromFile(retval[4], parametrs.getCapacity()));
+                signLenght = parametrs.getSignal().size();
                 startLoop();
                 break;
             }
             case "-s":{
                 System.out.print("read from console... ");
-                ToBoolean(retval[4], capacity);
-                sign_lenght = signal.size();
+                Data.ToBoolean(retval[4], parametrs.getCapacity());
+                signLenght = parametrs.getSignal().size();
                 startLoop();
-                break;
-            }
-            case "-str":{               // in progress
-                System.out.print("read from console... ");
-                signal = UI.wordToBoolean(retval[4], capacity);
-                sign_lenght = signal.size();
-                Iterator<ArrayList<Boolean>> iter = signal.iterator();
-                while (iter.hasNext()) {
-                    TripleEncoder.ptintToConsole(iter.next());
-                }
                 break;
             }
             default:{ return;}
@@ -167,46 +151,47 @@ public class UI{
 
     }
 
-    public void startLoop(){
-        for (int i = 0; i < this.repeat; i++) {
+    private void startLoop(){
+        ScanResults.delFile();
+        for (int i = 0; i < this.repeatTest; i++) {
             startTest(i);
             ScanResults.print(ScanResults.getStatistic("Results_Humming.txt"));
             ScanResults.print(ScanResults.getStatistic("Results_Triple.txt"));
         }
     }
 
-    public void startTest(int testNumber){
-        Test.fileNewTest(cin);
-        TestTriple.fileNewTest(cin);
+    private void startTest(int testNumber){
+        Test.fileNewTest(commandLineText);
+        TestTriple.fileNewTest(commandLineText);
         System.out.println("Test Number: " + testNumber);
         System.out.println("|                                               Testing:                                           |");
+        inProcess = true;
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         executorService.submit(new Thread(){
             @Override
             public void run() {
-                for (int i = 0; i < times; i++) {
-                    Iterator<ArrayList<Boolean>> iter = signal.iterator();
+                for (int i = 0; i < parametrs.getNumberOfTessts(); i++) {
+                    Iterator<ArrayList<Boolean>> iter = parametrs.getSignal().iterator();
                     while (iter.hasNext()){
                         ArrayList<Boolean> tmp = iter.next();
-                        executorService1.submit(new TestTriple(tmp, capacity));
+                        executorService1.submit(new TestTriple(tmp, parametrs.getPollution(),UI.this));
                     }
                 }
         }});
         executorService.submit(new Thread(){
             @Override
             public void run() {
-                for (int i = 0; i < times; i++) {
-                    Iterator<ArrayList<Boolean>> iter = signal.iterator();
+                for (int i = 0; i < parametrs.getNumberOfTessts(); i++) {
+                    Iterator<ArrayList<Boolean>> iter = parametrs.getSignal().iterator();
                     while (iter.hasNext()){
                         ArrayList<Boolean> tmp = iter.next();
-                        executorService2.submit(new Test(tmp, capacity));
+                        executorService2.submit(new Test(tmp, parametrs.getPollution(),UI.this));
                     }
                 }
             }});
-        aBoolean = false;
-        while (!aBoolean){
+        while (inProcess){
             try {
-                Thread.sleep(500);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -215,18 +200,22 @@ public class UI{
     }
 
 
-    public void genRandomSignal(int n){
+    private void genRandomSignal(int n){
         SecureRandom secureRandom = new SecureRandom();
         ArrayList<Boolean> tmp = new ArrayList<Boolean>();
         for (int i = 0; i < n; i++) {
             tmp.add(secureRandom.nextBoolean());
-            if(tmp.size() == capacity){
-                signal.add(new ArrayList<Boolean>(tmp));
+            if(tmp.size() == parametrs.getCapacity()){
+                LinkedList<ArrayList<Boolean>> temp = parametrs.getSignal();
+                temp.add(new ArrayList<Boolean>(tmp));
+                parametrs.setSignal(temp);
                 tmp = new ArrayList<Boolean>();
             }
         }
         if(tmp.size() != 0){
-            signal.add(new ArrayList<Boolean>(tmp));
+            LinkedList<ArrayList<Boolean>> temp = parametrs.getSignal();
+            temp.add(new ArrayList<Boolean>(tmp));
+            parametrs.setSignal(temp);
             tmp = new ArrayList<Boolean>();
         }
     }
@@ -272,116 +261,38 @@ public class UI{
         }
     }
 
-    public void ToBoolean(String s, int cap){
-        try{
-            capacity = cap;
-            ArrayList<Boolean> arrayList = new ArrayList<Boolean>();
-            for (int i = 0; i < s.length(); i++) {
-                if (s.charAt(i) == '1') {
-                    arrayList.add(true);
-                }
-                if (s.charAt(i) == '0') {
-                    arrayList.add(false);
-                }
-                if (arrayList.size() == cap) {
-                    signal.add(new ArrayList<Boolean>(arrayList));
-                    arrayList = new ArrayList<Boolean>();
-                }
-            }
-            System.out.println("OK");
-        }catch (Exception e){return;}
-
-    }
 
 
-    public static synchronized void loading(){
-        time++;
-        if(times >= 100){
-            if(time % (times*sign_lenght /50) == 0){
+
+    public synchronized void progress(){
+        try {
+            progressLine++;
+            if(parametrs.getNumberOfTessts() >= 100){
+                if(progressLine % (parametrs.getNumberOfTessts()* signLenght /50) == 0){
+                    System.out.print("#");
+                }
+            }else{
                 System.out.print("#");
             }
-        }else{
-            System.out.print("#");
-        }
-        if((time/2) == times*sign_lenght){
-            System.out.println();
-            System.out.println("completed");
-            time = 0;
-            aBoolean = true;
-        }
-    }
-
-    public static LinkedList<ArrayList<Boolean>> wordToBoolean(String s, int capacity){
-        try {
-            LinkedList<ArrayList<Boolean>> tmp = new LinkedList<ArrayList<Boolean>>();
-            ArrayList<Boolean> booleans = new ArrayList<Boolean>();
-            char[] c = s.toCharArray();
-            for (int i = 0; i < c.length; i++) {
-                int a = (int) c[i];
-                if (a - 128 > 0) {
-                    a -= 128;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (a - 64 > 0) {
-                    a -= 64;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (a - 32 > 0) {
-                    a -= 32;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (a - 16 > 0) {
-                    a -= 16;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (a - 8 > 0) {
-                    a -= 8;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (a - 4 > 0) {
-                    a -= 4;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (a - 2 > 0) {
-                    a -= 2;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (a - 1 > 0) {
-                    a -= 1;
-                    booleans.add(true);
-                } else {
-                    booleans.add(false);
-                }
-                if (capacity == booleans.size()) {
-                    tmp.add(booleans);
-                    booleans = new ArrayList<Boolean>();
-                }
+            if((progressLine /2) == parametrs.getNumberOfTessts()* signLenght){
+                System.out.println();
+                System.out.println("completed");
+                progressLine = 0;
+                inProcess = false;
             }
-            System.out.println("OK");
-            return tmp;
-        }catch (Exception e){return null;}
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
 
         UI ui = new UI();
         System.out.println("    h or help for help");
-        ui.mainLoop();
+        ui.commandMenu();
         System.exit(0);
     }
+
 }
 

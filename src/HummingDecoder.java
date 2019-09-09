@@ -1,24 +1,34 @@
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class HummingDecoder {
+public class HummingDecoder extends Signal {
 
-     ArrayList<Boolean> list;
-     ArrayList<Boolean> controlBytes;
-     ArrayList<Boolean> checkBytes;
-     ArrayList<Boolean> noCorrectList;
-     ArrayList<Boolean> finalList;
-     int capacity;
+    private ArrayList<Boolean> calculatedControlBits;
+    private ArrayList<Boolean> noCorrectFinalSignal;
 
-    HummingDecoder(ArrayList<Boolean> tmp, int capacity){
-        list = new ArrayList<Boolean>(tmp);
-        this.capacity = capacity;
+    HummingDecoder(ArrayList<Boolean> tmp) {
+        super(tmp);
     }
 
-    public void correction(){
-        finalList = new ArrayList<Boolean>(list);
-        Iterator<Boolean> iter1= controlBytes.iterator();
-        Iterator<Boolean> iter2= checkBytes.iterator();
+    public ArrayList<Boolean> getCalculatedControlBits() {
+        return calculatedControlBits;
+    }
+
+    public void setCalculatedControlBits(ArrayList<Boolean> calculatedControlBits) {
+        this.calculatedControlBits = calculatedControlBits;
+    }
+
+    public ArrayList<Boolean> getNoCorrectFinalSignal() {
+        return noCorrectFinalSignal;
+    }
+
+    public void setNoCorrectFinalSignal(ArrayList<Boolean> noCorrectFinalSignal) {
+        this.noCorrectFinalSignal = noCorrectFinalSignal;
+    }
+
+    private void correction() {
+        Iterator<Boolean> iter1 = getControlBit().iterator();
+        Iterator<Boolean> iter2 = calculatedControlBits.iterator();
         int i = 0;
         int number = 0;
         while (iter1.hasNext() && iter2.hasNext()) {
@@ -29,189 +39,124 @@ public class HummingDecoder {
             }
             i++;
         }
-            //System.out.print("/////////////////////////");
-            // System.out.println(number);
-            number--;
-            if(number >= 0 && number < list.size())
-                finalList.set(number, !list.get(number));
+        //System.out.print("/////////////////////////");
+        // System.out.println(number);
+        number--;
+        if (number >= 0 && number < getIntermediateSignal().size()) {
+            getIntermediateSignal().set(number, !getIntermediateSignal().get(number));
+        }
 
         this.delControlBytes();
     }
 
-    public void delControlBytes(){
+    private void delControlBytes() {
         ArrayList<Boolean> bool = new ArrayList<Boolean>();
         int degree = 0;
         int i = 0;
-        Iterator<Boolean> iter2 = finalList.iterator();
-        while (iter2.hasNext()){
+        Iterator<Boolean> iter2 = getIntermediateSignal().iterator();
+        while (iter2.hasNext()) {
             //System.out.print(i);
             //System.out.print("   ");
             //System.out.println(Math.pow(2, degree) - 1);
-            if(i != Math.pow(2, degree) - 1){
+            if (i != Math.pow(2, degree) - 1) {
                 bool.add(iter2.next());
-            }
-            else {
+            } else {
                 iter2.next();
                 degree++;
             }
             i++;
         }
-        this.finalList = new ArrayList<Boolean>(bool);
+        setFinalSignal(new ArrayList<Boolean>(bool));
     }
 
-    public void pullcontrolBytes(){
-            int degree = 0;
-            int i = 0;
-            int i2 = 0;
-            ArrayList<Boolean> bool = new ArrayList<Boolean>();
-            ArrayList<Boolean> tmp = new ArrayList<Boolean>();
-            Iterator<Boolean> iter2 = list.iterator();
-            while (iter2.hasNext()){
-                if(i == Math.pow(2, degree) - 1){
-                    tmp.add(iter2.next());
-                    degree++;
-                    i2++;
-                }
-                else {
-                    bool.add(iter2.next());
-                }
+    private void pullControlBytes() {
+        int degree = 0;
+        int i = 0;
+        ArrayList<Boolean> bool = new ArrayList<Boolean>();
+        ArrayList<Boolean> tmp = new ArrayList<Boolean>();
+        Iterator<Boolean> iter2 = getIntermediateSignal().iterator();
+        while (iter2.hasNext()) {
+            if (i == Math.pow(2, degree) - 1) {
+                tmp.add(iter2.next());
+                degree++;
+            } else {
+                bool.add(iter2.next());
+            }
 
-                i++;
-            }
-            while (tmp.size() < 7){
-                tmp.add(false);
-            }
-            noCorrectList = new ArrayList<Boolean>(bool);
-            this.controlBytes = tmp;
+            i++;
+        }
+
+       // printList(bool);
+       // printList(tmp);
+        noCorrectFinalSignal = bool;
+        setControlBit(tmp);
 
     }
-
-    public void deCoder(){
-        int[] c = new int[7];
-        int[] check = new int[6];
-        int[] check2 = new int[6];
-        for (int i = 0; i < 7; i++) {
+    @Override
+    void calculationOfControlBits() {
+        int[] c = new int[log2(getCapacity()) + 1];
+        int[] check = new int[log2(getCapacity())];
+        int[] check2 = new int[log2(getCapacity())];
+        for (int i = 0; i < c.length; i++) {
             c[i] = 0;
         }
-        check[0] = 2;
-        check2[0] = 1;
-        check[1] = 4;
-        check2[1] = 3;
-        check[2] = 8;
-        check2[2] = 7;
-        check[3] = 16;
-        check2[3] = 15;
-        check[4] = 32;
-        check2[4] = 31;
-        check[5] = 64;
-        check2[5] = 63;
+        for (int i = 0; i < check.length; i++) {
+            check[i] = (int) Math.pow(2, i + 1);
+            check2[i] = (int) Math.pow(2, i + 1) - 1;
+        }
 
         int i = 0;
-        Iterator<Boolean> iter = list.iterator();
-        while (iter.hasNext()){
+        Iterator<Boolean> iter = getIntermediateSignal().iterator();
+        while (iter.hasNext()) {
             Boolean tmpBool = iter.next();
-            if(i % 2 == 0 && tmpBool == true && i != 0){   // c0
+            if (i % 2 == 0 && tmpBool == true && i != 0) {   // c0
                 c[0]++;
             }
-            if(i == check[0]){   // c1
-                check2[0]--;
-                check[0]++;
-                if(tmpBool == true){
-                    c[1]++;
+            for (int j = 1; j < log2(getCapacity()) + 1; j++) {
+                if (i == check[j - 1]) {   // c1
+                    check2[j - 1]--;
+                    check[j - 1]++;
+                    if (tmpBool == true) {
+                        c[j]++;
+                    }
                 }
-            }
-            if(check2[0] == 0){
-                check[0]+= 2;
-                check2[0] = 2;
-            }
-            if(i == check[1]){   // c2
-                check[1]++;
-                check2[1]--;
-                if(tmpBool == true){
-                    c[2]++;
+                if (check2[j - 1] == 0) {
+                    check[j - 1] += Math.pow(2, j);
+                    check2[j - 1] = (int) Math.pow(2, j);
                 }
-            }
-            if(check2[1] == 0){
-                check[1]+= 4;
-                check2[1] = 4;
-            }
-            if(i == check[2]){   // c3
-                check[2]++;
-                check2[2]--;
-                if(tmpBool == true){
-                    c[3]++;
-                }
-            }
-            if(check2[2] == 0){
-                check[2]+= 8;
-                check2[2] = 8;
-            }
-            if(i == check[3]){   // c4
-                check[3]++;
-                check2[3]--;
-                if(tmpBool == true){
-                    c[4]++;
-                }
-            }
-            if(check2[3] == 0){
-                check[3]+= 16;
-                check2[3] = 16;
-            }
-            if(i == check[4]){   // c5
-                check[4]++;
-                check2[4]--;
-                if(tmpBool == true){
-                    c[5]++;
-                }
-            }
-            if(check2[4] == 0){
-                check[4]+= 32;
-                check2[4] = 32;
-            }
-            if(i == check[5]){   // c6
-                check[5]++;
-                check2[5]--;
-                if(tmpBool == true){
-                    c[6]++;
-                }
-            }
-            if(check2[5] == 0){
-                check[5]+= 64;
-                check2[5] = 64;
             }
             i++;
         }
 
         ArrayList<Boolean> bool = new ArrayList<Boolean>();
 
-        for (int i2 = 0; i2 < 7; i2++) {
-            if(c[i2]%2 == 1) {
+        for (int i2 = 0; i2 < log2(getCapacity()) + 1; i2++) {
+            if (c[i2] % 2 == 1) {
                 bool.add(true);
-            }
-            else {
+            } else {
                 bool.add(false);
             }
 
             //System.out.println(c[i2]);
         }
-        checkBytes = new ArrayList<Boolean>(bool);
+        calculatedControlBits = new ArrayList<Boolean>(bool);
         //list.set(numberOfNextArr, tmpArr);
     }
 
 
-    ArrayList<Boolean> decodeSignal(){
+    ArrayList<Boolean> decodeSignal() {
 
         //System.out.println("вход");
         //this.printList(this.list);
 
-        this.deCoder();
+        this.calculationOfControlBits();
         //System.out.println("декодер");
         //this.printList(this.checkBytes);
 
 
-        this.pullcontrolBytes();
+        this.pullControlBytes();
         //System.out.println("контрольки");
-        //this.printList(this.noCorrectList);
+        //this.printList(this.noCorrectFinalSignal);
         //this.printList(this.controlBytes);
 
         this.correction();
@@ -222,18 +167,18 @@ public class HummingDecoder {
         //this.printList(this.controlBytes);
         //this.printList(this.checkBytes);
 
-        return this.finalList;
+
+        return getFinalSignal();
     }
 
-    public void printList(ArrayList<Boolean> tmp){
+    public void printList(ArrayList<Boolean> tmp) {
         int i = 0;
         Iterator<Boolean> iterBool = tmp.iterator();
-        while(iterBool.hasNext()){
+        while (iterBool.hasNext()) {
             System.out.print(iterBool.next() + " ");
             i++;
         }
         System.out.println();
         System.out.println(i);
     }
-
 }

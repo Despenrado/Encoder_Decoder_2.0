@@ -103,7 +103,7 @@ public class ScanResults {
     }
 
     public static void print(ScanResults scanResults){
-        printToConsole(scanResults);
+        //printToConsole(scanResults);
         printToFile(scanResults);
     }
 
@@ -233,6 +233,21 @@ public class ScanResults {
             bufferedWriter.flush();
         }catch (IOException e){
             System.out.println("error");
+        }
+    }
+
+    public static void delFile(){
+        try{
+            File file = new File("Triple_nonCorrect.txt");
+            file.delete();
+            file = new File("Triple_Correct.txt");
+            file.delete();
+            file = new File("Humming_Correct.txt");
+            file.delete();
+            file = new File("Humming_nonCorrect.txt");
+            file.delete();
+        }catch (Exception e){
+
         }
     }
 

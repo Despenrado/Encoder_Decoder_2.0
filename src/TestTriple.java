@@ -5,43 +5,47 @@ import java.util.Iterator;
 
 public class TestTriple implements Runnable{
 
-    TripleDecoder tripleDecoder;
-    TripleEncoder tripleEncoder;
-    int capacity;
-    ArrayList<Boolean> arr;
-    ArrayList<Boolean> noise;
+    private TripleDecoder tripleDecoder;
+    private TripleEncoder tripleEncoder;
+    private ArrayList<Boolean> arr;
+    private ArrayList<Boolean> noise;
+    private int pollute;
+    private UI ui;
 
 
-    TestTriple(ArrayList<Boolean> array, int cap){
+    TestTriple(ArrayList<Boolean> array, int pollute, UI ui){
         this.arr = new ArrayList<Boolean>(array);
-        this.capacity = cap;
+        this.pollute = pollute;
+        this.ui = ui;
     }
 
     @Override
     public void run() {
-        tripleEncoder = new TripleEncoder(arr, 8);
+        tripleEncoder = new TripleEncoder(arr);
         tripleEncoder.encode();
-        noise = new ArrayList<Boolean>(tripleEncoder.list);
+        noise = new ArrayList<Boolean>(tripleEncoder.getFinalSignal());
 
         this.noise();
         //TripleEncoder.ptintToConsole(noise);
 
-        tripleDecoder = new TripleDecoder(this.noise, 8);
+        tripleDecoder = new TripleDecoder(this.noise);
         tripleDecoder.decode();
         //TripleDecoder.ptintToConsole(tripleDecoder.noCorrectList);
         //TripleDecoder.ptintToConsole(tripleDecoder.finalList);
 
         int n = check();
         TestTriple.print(n, this);
-        UI.loading();
+
+
+        ui.progress();
     }
 
-    public void noise(){
+    private void noise(){
         SecureRandom random = new SecureRandom();
         int i = 0;
         Iterator<Boolean> iter = this.noise.iterator();
         while (iter.hasNext()){
-            if(random.nextInt(100) < UI.pollute){
+            if(random.nextInt(100) < this.pollute){
                 boolean tmp = iter.next();
                 this.noise.set(i, !tmp);
             }
@@ -52,17 +56,25 @@ public class TestTriple implements Runnable{
         }
     }
 
-    public int check(){
+    private int check(){
 
         // 11 - bez zakl, sygnał korektny
         // 10 - z zakl, sygnal odnowiony
         // 00 - sygnal na tyle zalocony, ze nie mozna odnowic
         // 01 - blędna korekcja (z powody bitów korrekcyjnych)
 
-        if(this.arr.equals(tripleDecoder.finalList) && tripleEncoder.list.equals(tripleDecoder.noCorrectList)){return 1;}
-        if(this.arr.equals(tripleDecoder.finalList) && !tripleEncoder.list.equals(tripleDecoder.noCorrectList)){return 2;}
-        if(!this.arr.equals(tripleDecoder.finalList) && !tripleEncoder.list.equals(tripleDecoder.noCorrectList)){return 3;}
-        if(!this.arr.equals(tripleDecoder.finalList) && tripleEncoder.list.equals(tripleDecoder.noCorrectList)){return 4;}
+        if(this.arr.equals(tripleDecoder.getFinalSignal()) &&
+                tripleEncoder.getFinalSignal().equals(tripleDecoder.getInitialSignal())){
+            return 1;}
+        if(this.arr.equals(tripleDecoder.getFinalSignal()) &&
+                !tripleEncoder.getFinalSignal().equals(tripleDecoder.getInitialSignal())){
+            return 2;}
+        if(!this.arr.equals(tripleDecoder.getFinalSignal()) &&
+                !tripleEncoder.getFinalSignal().equals(tripleDecoder.getInitialSignal())){
+            return 3;}
+        if(!this.arr.equals(tripleDecoder.getFinalSignal()) &&
+                tripleEncoder.getFinalSignal().equals(tripleDecoder.getInitialSignal())){
+            return 4;}
 
 
         return 0;
@@ -90,13 +102,13 @@ public class TestTriple implements Runnable{
             bufferedWriter.write(Integer.toString(n));
             bufferedWriter.newLine();
 
-            Iterator<Boolean> iter = test.tripleEncoder.savedList.iterator();
+            Iterator<Boolean> iter = test.tripleEncoder.getInitialSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.write(" / ");
-            iter = test.tripleEncoder.list.iterator();
+            iter = test.tripleEncoder.getFinalSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
@@ -110,13 +122,13 @@ public class TestTriple implements Runnable{
             }
             bufferedWriter.newLine();
 
-            iter = test.tripleDecoder.noCorrectList.iterator();
+            iter = test.tripleDecoder.getInitialSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.write(" / ");
-            iter = test.tripleDecoder.finalList.iterator();
+            iter = test.tripleDecoder.getFinalSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
@@ -144,7 +156,7 @@ public class TestTriple implements Runnable{
         }
     }
 
-    public static void delFile(){
+    private static void delFile(){
         try{
             File file = new File("Results_Triple.txt");
             file.delete();
