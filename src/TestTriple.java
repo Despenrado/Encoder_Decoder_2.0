@@ -9,13 +9,13 @@ public class TestTriple implements Runnable{
     private TripleEncoder tripleEncoder;
     private ArrayList<Boolean> arr;
     private ArrayList<Boolean> noise;
-    private int pollute;
+    private int interference;
     private UI ui;
 
 
-    TestTriple(ArrayList<Boolean> array, int pollute, UI ui){
+    TestTriple(ArrayList<Boolean> array, int interference, UI ui){
         this.arr = new ArrayList<Boolean>(array);
-        this.pollute = pollute;
+        this.interference = interference;
         this.ui = ui;
     }
 
@@ -38,6 +38,7 @@ public class TestTriple implements Runnable{
 
 
         ui.progress();
+        ui.latch.countDown();
     }
 
     private void noise(){
@@ -45,7 +46,7 @@ public class TestTriple implements Runnable{
         int i = 0;
         Iterator<Boolean> iter = this.noise.iterator();
         while (iter.hasNext()){
-            if(random.nextInt(100) < this.pollute){
+            if(random.nextInt(100) < this.interference){
                 boolean tmp = iter.next();
                 this.noise.set(i, !tmp);
             }
@@ -88,7 +89,7 @@ public class TestTriple implements Runnable{
     }
 
     public synchronized static void printToFile(String fileName, int n){
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), "UTF-8")))){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("results/"+fileName, true), "UTF-8")))){
             bufferedWriter.write(Integer.toString(n));
             bufferedWriter.newLine();
             bufferedWriter.flush();
@@ -98,7 +99,7 @@ public class TestTriple implements Runnable{
     }
 
     public static synchronized void printToFile(String fileName, TestTriple test, int n){
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), "UTF-8")))){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("results/"+fileName, true), "UTF-8")))){
             bufferedWriter.write(Integer.toString(n));
             bufferedWriter.newLine();
 
@@ -147,7 +148,7 @@ public class TestTriple implements Runnable{
     }
 
     public static void propertiesOfTest(String text){
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Log_Triple.txt", true), "UTF-8")))){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("results/"+"Log_Triple.txt", true), "UTF-8")))){
             bufferedWriter.write(text);
             bufferedWriter.newLine();
             bufferedWriter.flush();
@@ -158,7 +159,7 @@ public class TestTriple implements Runnable{
 
     private static void delFile(){
         try{
-            File file = new File("Results_Triple.txt");
+            File file = new File("results/"+"Results_Triple.txt");
             file.delete();
         }catch (Exception e){
 

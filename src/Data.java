@@ -3,13 +3,13 @@ import java.util.LinkedList;
 
 public class Data {
     private LinkedList<ArrayList<Boolean>> signal;
-    private int pollution;
+    private int interference;
     private int numberOfTests;
     private int capacity;
 
-    public Data(LinkedList<ArrayList<Boolean>> signal, int pollution, int numberOfTests, int capacity){
+    public Data(LinkedList<ArrayList<Boolean>> signal, int interference, int numberOfTests, int capacity){
         this.signal = signal;
-        this.pollution = pollution;
+        this.interference = interference;
         this.capacity = capacity;
         this.numberOfTests = numberOfTests;
     }
@@ -26,12 +26,12 @@ public class Data {
         this.signal = signal;
     }
 
-    public int getPollution() {
-        return pollution;
+    public int getInterference() {
+        return interference;
     }
 
-    public void setPollution(int pollution) {
-        this.pollution = pollution;
+    public void setInterference(int interference) {
+        this.interference = interference;
     }
 
     public int getNumberOfTessts() {

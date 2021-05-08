@@ -3,18 +3,18 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class Test implements Runnable{
+public class HummingTest implements Runnable{
 
     private ArrayList<Boolean> arr;
     private ArrayList<Boolean> noise;
     private HummingDecoder hummingDecoder;
     private  HummingEncoder hummingEncoder;
-    private int pollute;
+    private int interference;
     private UI ui;
 
-    Test(ArrayList<Boolean> array, int pollute, UI ui){
+    HummingTest(ArrayList<Boolean> array, int interference, UI ui){
         this.arr = new ArrayList<Boolean>(array);
-        this.pollute = pollute;
+        this.interference = interference;
         this.ui = ui;
     }
 
@@ -33,6 +33,7 @@ public class Test implements Runnable{
         print(check(), this);
 
         ui.progress();
+        ui.latch.countDown();
     }
 
     private int check(){
@@ -44,7 +45,16 @@ public class Test implements Runnable{
         //010 - 5 - zaklocenia w bitach kontrolnych => nie wykryte zaklocenia => dekoder dziala;+
         //011 - 6 - bez zaklocen, ale problem z dekoderem => nie wykryte zaklocenia;
         //001 - 7 - wiele zaklocen w sygnalie lub problem dekodera => nie wykryte zaklocenia+
-        //000 - 8 - wszedzie blednde+
+        //000 - 8 - wszedzie bledndy (w bitach kontrolnych i w sygnale)+
+        ////
+        //111 - 1 - no interference;+
+        //101 - 2 - interference detected;+
+        //100 - 3 - interference in the signal and in the control bits = > but detected interference = > blend in the decoder;
+        //110 - 4 - 1 interference in the control bits or in the minor bits or the decoder blend = > but detected interference;+
+        //010 - 5 - interference in the control bits = > no interference detected = > the decoder is working;+
+        //011 - 6 - no interference, but a problem with the decoder = > no interference detected;
+        //001 - 7 - multiple signal interference or decoder problem = > undetected interference+
+        //000 - 8 - everywhere bledndy (in the control bits and in the signal)+
 
         if(hummingEncoder.getInitialSignal().equals(hummingDecoder.getFinalSignal()) &&
                 hummingEncoder.getInitialSignal().equals(hummingDecoder.getNoCorrectFinalSignal()) &&
@@ -90,7 +100,7 @@ public class Test implements Runnable{
         int i = 0;
         Iterator<Boolean> iter = noise.iterator();
         while (iter.hasNext()){
-            if(random.nextInt(100) < this.pollute){
+            if(random.nextInt(100) < this.interference){
                 boolean tmp = iter.next();
                 this.noise.set(i, !tmp);
             }
@@ -102,14 +112,14 @@ public class Test implements Runnable{
     }
 
 
-    public static synchronized void print(int n, Test test){
-        Test.printToFile("Results_Humming.txt", n);
-        Test.printToFile("Log_Humming.txt", test, n);
+    public static synchronized void print(int n, HummingTest hummingTest){
+        HummingTest.printToFile("Results_Humming.txt", n);
+        HummingTest.printToFile("Log_Humming.txt", hummingTest, n);
            // UI.getProgress(test.times);
     }
 
     public synchronized static void printToFile(String fileName, int n){
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), "UTF-8")))){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("results/"+fileName, true), "UTF-8")))){
             bufferedWriter.write(Integer.toString(n));
             bufferedWriter.newLine();
             bufferedWriter.flush();
@@ -118,56 +128,56 @@ public class Test implements Runnable{
         }
     }
 
-    public static synchronized void printToFile(String fileName, Test test, int n){
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), "UTF-8")))){
+    public static synchronized void printToFile(String fileName, HummingTest hummingTest, int n){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("results/"+fileName, true), "UTF-8")))){
             bufferedWriter.write(Integer.toString(n));
             bufferedWriter.newLine();
 
-            Iterator<Boolean> iter = test.hummingEncoder.getInitialSignal().iterator();
+            Iterator<Boolean> iter = hummingTest.hummingEncoder.getInitialSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.write(" / ");
-            iter = test.hummingEncoder.getControlBit().iterator();
+            iter = hummingTest.hummingEncoder.getControlBit().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.write(" / ");
-            iter = test.hummingEncoder.getIntermediateSignal().iterator();
+            iter = hummingTest.hummingEncoder.getIntermediateSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.newLine();
 
-            iter = test.noise.iterator();
+            iter = hummingTest.noise.iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.newLine();
 
-            iter = test.hummingDecoder.getFinalSignal().iterator();
+            iter = hummingTest.hummingDecoder.getFinalSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.write(" / ");
-            iter = test.hummingDecoder.getNoCorrectFinalSignal().iterator();
+            iter = hummingTest.hummingDecoder.getNoCorrectFinalSignal().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.write(" / ");
-            iter = test.hummingDecoder.getControlBit().iterator();
+            iter = hummingTest.hummingDecoder.getControlBit().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
             }
             bufferedWriter.write(" / ");
-            iter = test.hummingDecoder.getCalculatedControlBits().iterator();
+            iter = hummingTest.hummingDecoder.getCalculatedControlBits().iterator();
             while(iter.hasNext()){
                 bufferedWriter.write(Boolean.toString(iter.next()) + " ");
 
@@ -181,12 +191,12 @@ public class Test implements Runnable{
     }
 
     public static void fileNewTest(String text){
-        Test.delFile();
-        Test.propertiesOfTest(text);
+        HummingTest.delFile();
+        HummingTest.propertiesOfTest(text);
     }
 
     public static void propertiesOfTest(String text){
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("Log_Humming.txt", true), "UTF-8")))){
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(new OutputStreamWriter(new FileOutputStream("results/"+"Log_Humming.txt", true), "UTF-8")))){
             bufferedWriter.write(text);
             bufferedWriter.newLine();
             bufferedWriter.flush();
@@ -197,7 +207,7 @@ public class Test implements Runnable{
 
     public static void delFile(){
         try{
-            File file = new File("Results_Humming.txt");
+            File file = new File("results/"+"Results_Humming.txt");
             file.delete();
         }catch (Exception e){
 
